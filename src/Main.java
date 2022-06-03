@@ -1,16 +1,14 @@
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
-import java.util.logging.Logger;
 
 public class Main {
 
     // private static final Logger log = Logger.getLogger(Main.class.getName());
 
-    private static ArrayList<String> linksLog = new ArrayList<>();
+    private static final ArrayList<String> linksLog = new ArrayList<>();
 
     public static void main(String[] args) {
 
@@ -103,7 +101,7 @@ public class Main {
                         htmlString = reader.readLine();
                         continue;
                     }
-                    String reg = "(.*</b>[(</i>]*.*;*\\s*[<span class=\"lang\">]*\\(.*)"; //Для случая, если строка начинается с названия и скобок
+                    String reg = "(.*</b>[(</i>]*.*;*\\s*(<span class=\"lang\">)*\\(.*)"; //Для случая, если строка начинается с названия и скобок
                     //log.info("Имеет скобки: " + htmlString.matches(reg));
 
                     if (htmlString.matches(reg)) {
