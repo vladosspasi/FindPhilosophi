@@ -20,13 +20,16 @@ public class Main {
         System.out.println("-----------------------------------------------------------");
         System.out.println("Введите ссылку на вашу статью:");
 
+        //TODO если нажать backspace или delete при вводе, то все ломается
+
         Scanner scanner = new Scanner(System.in);
         String originLink = scanner.nextLine();
 
         ArrayList<String> pageData = getArticleNameAndNextLink(originLink);
-        System.out.println("Начальная статья: \"" + pageData.get(0) + "\".");
-        linksLog.add(pageData.get(1));
-
+        if(pageData.size()!=0){
+            System.out.println("Начальная статья: \"" + pageData.get(0) + "\".");
+            linksLog.add(pageData.get(1));
+        }
         int i = 0;
 
         while (!Objects.equals(pageData.get(0), "Философия")) {
@@ -35,13 +38,13 @@ public class Main {
             if (pageData.size() == 0) {
                 break;
             }
-
             i++;
             System.out.println("Переход №" + i + ". Статья \"" + pageData.get(0) + "\".");
             if (linksLog.contains(pageData.get(1))) {
-                System.out.println("Эта страница уже встречалась! Произошло зацикливание. Попробуйте другую страницу.");
+                System.out.println("Следующая страница уже встречалась! Произошло зацикливание. Попробуйте другую страницу.");
                 break;
             }
+
             linksLog.add(pageData.get(1));
         }
 
@@ -71,7 +74,7 @@ public class Main {
 
                 //Пока документ не закончился и пока не найдено имя
                 while (htmlString != null && !nameFound) {
-                    log.info("Текущая строка: " + htmlString);
+                    //log.info("Текущая строка: " + htmlString);
                     //Название содержится в первой строке со словом <title>
                     if (htmlString.toLowerCase(Locale.ROOT).contains("<title>")) {
                         articleName = htmlString.substring(7, htmlString.length() - 1).split("—")[0];
@@ -83,9 +86,9 @@ public class Main {
 
                 //Ищем начало текста - после </table>
                 while (htmlString != null) {
-                    log.info("Текущая строка: " + htmlString);
-                    //Поиск конца секции table
-                    if ((htmlString.contains("<p><b>")||htmlString.contains("<p><i><b>"))&&!htmlString.contains("<table")) {
+                    //log.info("Текущая строка: " + htmlString);
+                    if ((htmlString.contains("<p><b>")||htmlString.contains("<p><i><b>")||htmlString.matches(".*<p>.*(<i>)*.*<b>.*"))
+                            &&!htmlString.contains("<table")) { //Первая строка начинается с темы жирным шрифтом
                             break;
                     }else{
                         htmlString = reader.readLine();
@@ -93,13 +96,15 @@ public class Main {
                 }
                 log.info("Первая строка текста: " + htmlString);
 
-
-
                 //Просмотр последующих строк
                 while (htmlString!=null){
-
-                    String reg = "(.*</b>[(</i>]* \\(.*)"; //Для случая, если строка начинается с названия и скобок
-                    log.info("Имеет скобки: " + htmlString.matches(reg));
+                    log.info("текущая строка: " + htmlString);
+                    if(!(htmlString.contains("<p>")||htmlString.contains("<li>"))) {
+                        htmlString = reader.readLine();
+                        continue;
+                    }
+                    String reg = "(.*</b>[(</i>]*.*;*\\s*[<span class=\"lang\">]*\\(.*)"; //Для случая, если строка начинается с названия и скобок
+                    //log.info("Имеет скобки: " + htmlString.matches(reg));
 
                     if (htmlString.matches(reg)) {
                         //Есть скобки после названия
@@ -108,7 +113,7 @@ public class Main {
 
                         try{
                             htmlArrayByBrackets = htmlString.split("\\)");
-                            log.info("Длина деления: " + htmlArrayByBrackets.length);
+                            //log.info("Длина деления: " + htmlArrayByBrackets.length);
 
                             for (int i = 1; i < htmlArrayByBrackets.length; i++) {
                                 maybeStr = maybeStr + htmlArrayByBrackets[i];
@@ -120,20 +125,28 @@ public class Main {
                     } else {
                         maybeStr = htmlString;
                     }
-                    log.info("Очищенная строка: " + maybeStr);
+                    //log.info("Очищенная строка: " + maybeStr);
                     //Ищем ссылки
                     String[] linksArray;
 
                     try {
                         linksArray = maybeStr.split("<a");
 
-                        log.info("Длина деления на ссылки: " + linksArray.length);
+                        //log.info("Длина деления на ссылки: " + linksArray.length);
 
                         for (int i = 1; i < linksArray.length; i++) {
-                            log.info("Текущая ссылка: " + linksArray[i]);
+                           // log.info("Текущая ссылка: " + linksArray[i]);
                             //Ссылки квадраты - не нужны
-                            if (linksArray[i].contains("[")) continue;
-                            nextArticleLink = "https://ru.wikipedia.org/" + linksArray[i].split("\"")[1];
+                            if (linksArray[i].contains("[")||linksArray[i].contains("cite_note")) continue;
+                            nextArticleLink = linksArray[i].split("href")[1];
+                            nextArticleLink = "https://ru.wikipedia.org/" + nextArticleLink.split("\"")[1];
+                            if(nextArticleLink.contains("(")&&!nextArticleLink.contains(")")){
+                                nextArticleLink = nextArticleLink+")";
+                            }
+
+
+                            //nextArticleLink = "https://ru.wikipedia.org/" + linksArray[i].split("\"")[1];
+                            log.info("Текущая ссылка: " + linksArray[i]);
                             linkFound = true;
                             break;
                         }
@@ -147,21 +160,21 @@ public class Main {
 
                 reader.close();
             } catch (IOException e) {
-                System.out.println("Произошла ошибка!");
+                System.out.println("Произошла ошибка! Возможно введен неверный адрес.");
                 e.printStackTrace();
             }
         } catch (
-                MalformedURLException ex) {
+                Exception ex) {
             ex.printStackTrace();
         }
 
         if (!nameFound) {
-            System.out.println("У страницы нет названия, видимо она пуста.");
+            System.out.println("Что-то пошло не так. Приносим извинения за небольшие технические шоколадки :)");
             return new ArrayList<>();
         }
 
         if (!linkFound) {
-            System.out.println("У страницы нет ссылок, видимо она тупиковая. Введите другую страницу");
+            System.out.println("У страницы не найдены ссылки, видимо она тупиковая. Введите другую страницу.");
             return new ArrayList<>();
         }
 
