@@ -12,7 +12,6 @@ public class Main {
 
     private static ArrayList<String> linksLog = new ArrayList<>();
 
-
     public static void main(String[] args) {
 
         System.out.println("ВСЕ ПУТИ ВЕДУТ К ФИЛОСОФИИ!");
