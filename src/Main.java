@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 
 public class Main {
 
-    private static final Logger log = Logger.getLogger(Main.class.getName());
+    // private static final Logger log = Logger.getLogger(Main.class.getName());
 
     private static ArrayList<String> linksLog = new ArrayList<>();
 
@@ -26,7 +26,7 @@ public class Main {
         String originLink = scanner.nextLine();
 
         ArrayList<String> pageData = getArticleNameAndNextLink(originLink);
-        if(pageData.size()!=0){
+        if (pageData.size() != 0) {
             System.out.println("Начальная статья: \"" + pageData.get(0) + "\".");
             linksLog.add(pageData.get(1));
         }
@@ -87,19 +87,19 @@ public class Main {
                 //Ищем начало текста - после </table>
                 while (htmlString != null) {
                     //log.info("Текущая строка: " + htmlString);
-                    if ((htmlString.contains("<p><b>")||htmlString.contains("<p><i><b>")||htmlString.matches(".*<p>.*(<i>)*.*<b>.*"))
-                            &&!htmlString.contains("<table")) { //Первая строка начинается с темы жирным шрифтом
-                            break;
-                    }else{
+                    if ((htmlString.contains("<p><b>") || htmlString.contains("<p><i><b>") || htmlString.matches(".*<p>.*(<i>)*.*<b>.*"))
+                            && !htmlString.contains("<table")) { //Первая строка начинается с темы жирным шрифтом
+                        break;
+                    } else {
                         htmlString = reader.readLine();
                     }
                 }
-                log.info("Первая строка текста: " + htmlString);
+                //log.info("Первая строка текста: " + htmlString);
 
                 //Просмотр последующих строк
-                while (htmlString!=null){
-                    log.info("текущая строка: " + htmlString);
-                    if(!(htmlString.contains("<p>")||htmlString.contains("<li>"))) {
+                while (htmlString != null) {
+                    //log.info("текущая строка: " + htmlString);
+                    if (!(htmlString.contains("<p>") || htmlString.contains("<li>"))) {
                         htmlString = reader.readLine();
                         continue;
                     }
@@ -111,14 +111,13 @@ public class Main {
                         //Отделяем по скобкам, и затем объединяем все кроме первой части (Название и скобки)
                         String[] htmlArrayByBrackets;
 
-                        try{
+                        try {
                             htmlArrayByBrackets = htmlString.split("\\)");
                             //log.info("Длина деления: " + htmlArrayByBrackets.length);
-
                             for (int i = 1; i < htmlArrayByBrackets.length; i++) {
                                 maybeStr = maybeStr + htmlArrayByBrackets[i];
                             }
-                        }catch (Exception e){
+                        } catch (Exception e) {
                             continue;
                         }
 
@@ -135,26 +134,24 @@ public class Main {
                         //log.info("Длина деления на ссылки: " + linksArray.length);
 
                         for (int i = 1; i < linksArray.length; i++) {
-                           // log.info("Текущая ссылка: " + linksArray[i]);
+                            // log.info("Текущая ссылка: " + linksArray[i]);
                             //Ссылки квадраты - не нужны
-                            if (linksArray[i].contains("[")||linksArray[i].contains("cite_note")) continue;
+                            if (linksArray[i].contains("[") || linksArray[i].contains("cite_note")) continue;
                             nextArticleLink = linksArray[i].split("href")[1];
                             nextArticleLink = "https://ru.wikipedia.org/" + nextArticleLink.split("\"")[1];
-                            if(nextArticleLink.contains("(")&&!nextArticleLink.contains(")")){
-                                nextArticleLink = nextArticleLink+")";
+                            if (nextArticleLink.contains("(") && !nextArticleLink.contains(")")) {
+                                nextArticleLink = nextArticleLink + ")";
                             }
 
-
-                            //nextArticleLink = "https://ru.wikipedia.org/" + linksArray[i].split("\"")[1];
-                            log.info("Текущая ссылка: " + linksArray[i]);
+                            //log.info("Текущая ссылка: " + linksArray[i]);
                             linkFound = true;
                             break;
                         }
-                    }catch (Exception exception){
+                    } catch (Exception exception) {
                         continue;
                     }
 
-                    if(linkFound) break;
+                    if (linkFound) break;
                     htmlString = reader.readLine();
                 }
 
